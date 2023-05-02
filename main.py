@@ -81,7 +81,7 @@ class FractalWindow(imgui_window_base.ImGuiWindowBase):
         print(py_exp)
         print(gl_exp)
         print("-"*30)
-        with open("../generated_fractal_functions.txt", "a") as f:
+        with open("generated_fractal_functions.txt", "a") as f:
             f.write(f"{py_exp}\n{gl_exp}\n\n")
 
         self._generated_fractal_cnt += 1

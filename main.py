@@ -7,7 +7,7 @@ import moderngl as gl
 import imgui
 from pygame import Vector2
 
-import imgui_window_base
+from utils import imgui_window_base, shader_reload_observer
 import settings
 from settings import Settings
 import fractal_render
@@ -15,7 +15,6 @@ import fractals
 import audio
 
 import random_fractal_expression_generator
-import shader_reload_observer
 
 USE_VIZTRACER = False
 
@@ -97,13 +96,17 @@ class FractalWindow(imgui_window_base.ImGuiWindowBase):
 
     # noinspection PyArgumentList
     def buildImGui(self, frame_time: float, dt: float):
+        imgui.push_style_var(imgui.STYLE_WINDOW_ROUNDING, 8)
+        imgui.push_style_color(imgui.COLOR_WINDOW_BACKGROUND, .059, .059, .059, .8)
         imgui.set_next_window_position(0, self.wnd.height / 2, condition=imgui.ALWAYS, pivot_y=.5)
         imgui.begin("Settings", flags=imgui.WINDOW_ALWAYS_AUTO_RESIZE | imgui.WINDOW_NO_SAVED_SETTINGS)
-        item_width = 55
+
+        indent = 8
 
         # ---------- Fractal ----------
         imgui.set_next_item_open(True, condition=imgui.FIRST_USE_EVER)
         if imgui.collapsing_header("Fractal")[0]:
+            imgui.indent(indent)
             pos = self.rndr.transform(self.rndr.toNDR(self.mouse_pos))
             imgui.text("X: %.8f" % pos.x)
             imgui.text("Y: %.8f" % pos.y)
@@ -130,20 +133,22 @@ class FractalWindow(imgui_window_base.ImGuiWindowBase):
 
             if imgui.button("Reset Camera"):
                 self.rndr.resetTransformation()
+            imgui.unindent(indent)
+            imgui.separator()
+
+        item_width = 55
 
         # ---------- Rendering ----------
         imgui.set_next_item_open(False, condition=imgui.FIRST_USE_EVER)
         if imgui.collapsing_header("Rendering")[0]:
-            imgui.set_next_item_width(item_width)
+            imgui.indent(indent)
+            imgui.push_item_width(item_width)
             self.reChTrig, self.settings.iterations = imgui.drag_int("Iters", self.settings.iterations, min_value=1, max_value=32768, change_speed=15, flags=imgui.SLIDER_FLAGS_LOGARITHMIC)
-            imgui.set_next_item_width(item_width)
             self.reChTrig, self.settings.render_escape_threshold = imgui.drag_float("Esc. TH.", self.settings.render_escape_threshold, min_value=0.01, max_value=1E7, change_speed=10000, format=f"%.{0 if self.settings.render_escape_threshold > 100 else 3}f", flags=imgui.SLIDER_FLAGS_LOGARITHMIC)
             switched_prec, self.settings.double_precision = imgui.checkbox("64bit Prec.", self.settings.double_precision)
             if switched_prec:
                 self.rndr.reloadShaders(reload_source=False)
-            imgui.set_next_item_width(item_width)
             self.reChTrig, self.settings.render_samples = imgui.drag_int("Samples", self.settings.render_samples, min_value=1, max_value=10, change_speed=.05)
-            imgui.set_next_item_width(item_width)
             self.reChTrig, self.settings.static_frame_mix = imgui.drag_float("St. Frame Mix", self.settings.static_frame_mix, min_value=0, max_value=2, change_speed=.005)
 
             imgui.separator()
@@ -159,10 +164,15 @@ class FractalWindow(imgui_window_base.ImGuiWindowBase):
             if imgui.button("Reset Settings##render"):
                 self.settings.resetRenderSettings()
                 self.rndr.reloadShaders(reload_source=False)
+            imgui.pop_item_width()
+            imgui.unindent(indent)
+            imgui.separator()
 
         # ---------- Path ----------
         imgui.set_next_item_open(False, condition=imgui.FIRST_USE_EVER)
         if imgui.collapsing_header("Path")[0]:
+            imgui.indent(indent)
+            imgui.push_item_width(item_width)
             imgui.align_text_to_frame_padding()
             imgui.text("Path Speed")
             imgui.same_line()
@@ -177,7 +187,6 @@ class FractalWindow(imgui_window_base.ImGuiWindowBase):
                 _, self.settings.path_speed = imgui.drag_int("##path_speed_drag", self.settings.path_speed, min_value=0,
                                                              max_value=10000, change_speed=100,
                                                              flags=imgui.SLIDER_FLAGS_LOGARITHMIC)
-            imgui.set_next_item_width(item_width)
             _, self.settings.path_segments = imgui.drag_int("Path Segments", self.settings.path_segments, min_value=1,
                                                             max_value=10000, change_speed=100,
                                                             flags=imgui.SLIDER_FLAGS_LOGARITHMIC)
@@ -208,12 +217,16 @@ class FractalWindow(imgui_window_base.ImGuiWindowBase):
                 self.settings.resetPathSettings()
                 self.path_follow_audio_speed = True
                 self.rainbow_path = False
+            imgui.pop_item_width()
+            imgui.unindent(indent)
+            imgui.separator()
 
         # ---------- Audio ----------
         item_width = 100
         imgui.set_next_item_open(False, condition=imgui.FIRST_USE_EVER)
         if imgui.collapsing_header("Audio")[0]:
-            imgui.set_next_item_width(item_width)
+            imgui.indent(indent)
+            imgui.push_item_width(item_width)
             _, self.settings.volume = imgui.slider_float("Volume", self.settings.volume, 0., 1.)
 
             changed, self.do_audio_fade = imgui.checkbox("Fade", self.do_audio_fade)
@@ -221,22 +234,16 @@ class FractalWindow(imgui_window_base.ImGuiWindowBase):
                 self.settings.audio_fade = 7 if self.do_audio_fade else 0
                 self.syn.updateFadeMode()
             if self.do_audio_fade:
-                imgui.set_next_item_width(item_width)
                 changed, self.settings.audio_fade = imgui.slider_float("Fade Factor", self.settings.audio_fade, 2., 10., flags=imgui.SLIDER_FLAGS_LOGARITHMIC)
                 if changed:
                     self.syn.updateFadeMode()
 
-            imgui.set_next_item_width(item_width)
             _, self.settings.sample_freq = imgui.drag_int("Freq.", self.settings.sample_freq, min_value=200, max_value=10000, change_speed=100)
-            imgui.set_next_item_width(item_width)
             _, self.settings.audio_buffer_size = imgui.drag_int("Buffer Size", self.settings.audio_buffer_size, min_value=16, max_value=16384, change_speed=100, flags=imgui.SLIDER_FLAGS_LOGARITHMIC)
-            imgui.set_next_item_width(item_width)
             _, self.settings.max_sources = imgui.slider_int("Max Sources", self.settings.max_sources, min_value=1, max_value=10)
-            imgui.set_next_item_width(item_width)
             changed, new_interp = imgui.combo("Interp.", self.settings.interpolation.value[0], settings.INTERP_NAMES)
             if changed:
                 self.settings.interpolation = settings.AudioInterpolations[settings.INTERP_NAMES[new_interp]]
-            imgui.set_next_item_width(item_width)
             _, self.settings.audio_escape_threshold = imgui.drag_float("Esc. TH.", self.settings.audio_escape_threshold, min_value=0.01, max_value=1E5, change_speed=100, format=f"%.{0 if self.settings.render_escape_threshold > 100 else 3}f", flags=imgui.SLIDER_FLAGS_LOGARITHMIC)
             if imgui.button("Reset Settings##audio"):
                 self.settings.resetAudioSettings()
@@ -244,8 +251,12 @@ class FractalWindow(imgui_window_base.ImGuiWindowBase):
             imgui.text(f"Sources: {len(self.syn.sources)}")
             if imgui.button("Stop Sound"):
                 self.syn.stopSound()
+            imgui.pop_item_width()
+            imgui.unindent(indent)
 
         imgui.end()
+        imgui.pop_style_color()
+        imgui.pop_style_var()
 
     # noinspection PyArgumentList
     def detectDebugShaderReload(self):

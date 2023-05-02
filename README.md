@@ -24,7 +24,7 @@ Features
 
 Planned
 ---------------
-* Support for Julia sets and orbit visualization
+* Support for Julia sets and orbit coloring
 * Customizable color palette
 * Easy-to-use fractal function editor
 * Audio performance improvement (multi-processing?)

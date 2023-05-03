@@ -28,6 +28,10 @@ class ImGuiWindowBase(mglw.WindowConfig, ABC):
     def key_event(self, key, action, modifiers):
         self.imgui.key_event(key, action, modifiers)
 
+        self.imgui.io.key_shift = modifiers.shift
+        self.imgui.io.key_ctrl = modifiers.ctrl
+        self.imgui.io.key_alt = modifiers.alt
+
     def mouse_position_event(self, x, y, dx, dy):
         self.imgui.mouse_position_event(x, y, dx, dy)
 

@@ -22,12 +22,11 @@ os.environ["MODERNGL_WINDOW"] = "pyglet"
 
 class FractalWindow(imgui_window_base.ImGuiWindowBase):
     title = "Fractal Explorer"
-    # gl_version = (4, 3)
+    gl_version = (4, 0)
     window_size = (1280, 720)
     fullscreen = False
     resizable = True
     vsync = True
-    samples = 4
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

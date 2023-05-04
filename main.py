@@ -7,7 +7,7 @@ import moderngl as gl
 import imgui
 from pygame import Vector2
 
-from utils import imgui_window_base, shader_reload_observer
+from utils import imgui_window_base, shader_reload_observer, imgui_utils
 import settings
 from settings import Settings
 import fractal_render
@@ -36,17 +36,22 @@ class FractalWindow(imgui_window_base.ImGuiWindowBase):
         
         self.rndr = fractal_render.Renderer(self.ctx, self.wnd, self.settings)
         self.syn = audio.Synthesizer(self.settings)
-        self.do_audio_fade = False
-        self.rainbow_path = False
-        self.path_follow_audio_speed = True
+        self._do_audio_fade = False
+        self._rainbow_path = False
+        self._path_follow_audio_speed = True
 
         self._generated_fractal_cnt = 0
 
         self.mouse_pos = (0, 0)
-        self.dragging = False
-        self.mouse_dragging_delta_for_audio_trigger = Vector2()
+        self._dragging = False
+        self._mouse_dragging_delta_for_audio_trigger = Vector2()
+        self._color_gradient_edit = imgui_utils.ColorGradientEdit(
+            identifier="##fractal_color_palette",
+            gradient=self.settings.color_palette,
+            repeating=True
+        )
 
-        self.history_dts = []
+        self._history_dts = []
         self.render_time = 0.0
 
     def render(self, frame_time, dt):
@@ -55,12 +60,12 @@ class FractalWindow(imgui_window_base.ImGuiWindowBase):
             self.renderImGui(frame_time, dt)
         self.render_time = gl_query.elapsed
 
-        if self.rainbow_path:
+        if self._rainbow_path:
             self.settings.path_color = (*imgui.color_convert_hsv_to_rgb(frame_time / 5, 1, 1), 1)
 
-        if self.mouse_dragging_delta_for_audio_trigger.length_squared() > 10*10:
+        if self._mouse_dragging_delta_for_audio_trigger.length_squared() > 10*10:
             self._fractalInteract(self.mouse_pos)
-            self.mouse_dragging_delta_for_audio_trigger.update(0, 0)
+            self._mouse_dragging_delta_for_audio_trigger.update(0, 0)
 
         self.syn.update()
 
@@ -76,7 +81,7 @@ class FractalWindow(imgui_window_base.ImGuiWindowBase):
             self.rndr.reRender()
 
     def _generateRandomFractalExpression(self):
-        py_exp, gl_exp = random_fractal_expression_generator.genFractalExpression(1, 0.96)
+        py_exp, gl_exp = random_fractal_expression_generator.genFractalExpression(1, 0.8)
         print(py_exp)
         print(gl_exp)
         print("-"*30)
@@ -151,19 +156,28 @@ class FractalWindow(imgui_window_base.ImGuiWindowBase):
             self.reChTrig, self.settings.render_samples = imgui.drag_int("Samples", self.settings.render_samples, min_value=1, max_value=10, change_speed=.05)
             self.reChTrig, self.settings.static_frame_mix = imgui.drag_float("St. Frame Mix", self.settings.static_frame_mix, min_value=0, max_value=2, change_speed=.005)
 
+            imgui.text("Color Palette:")
+            imgui.set_next_item_width(-1)
+            if self._color_gradient_edit.build():
+                self.settings.color_palette = self._color_gradient_edit.gradient
+                self.rndr.reloadColorPalette()
+            self.reChTrig, self.settings.color_change_speed = imgui.drag_float("Color Speed", self.settings.color_change_speed, min_value=0, max_value=1, change_speed=.005, flags=imgui.SLIDER_FLAGS_LOGARITHMIC)
+
             imgui.separator()
             imgui.text(f"Static Frames: {self.rndr.static_frames if self.rndr.static_frames <= 1000 else '>1000'}")
             imgui.text(f"Anti-Aliasing: {self.rndr.should_apply_aa}")
             imgui.text(f"Rendering: {self.rndr.rendered}")
-            self.history_dts.append(dt)
-            if sum(self.history_dts) > .1:
-                self.history_dts.pop(0)
-                avg_dt = sum(self.history_dts) / len(self.history_dts)
+            self._history_dts.append(dt)
+            if sum(self._history_dts) > .1:
+                self._history_dts.pop(0)
+                avg_dt = sum(self._history_dts) / len(self._history_dts)
                 imgui.text("%.1f fps" % (1 / max(avg_dt, .001)))
                 imgui.text("%.3f ms" % (self.render_time / 1E6))
             if imgui.button("Reset Settings##render"):
                 self.settings.resetRenderSettings()
                 self.rndr.reloadShaders(reload_source=False)
+                self._color_gradient_edit.gradient = self.settings.color_palette
+                self.rndr.reloadColorPalette()
             imgui.pop_item_width()
             imgui.unindent(indent)
             imgui.separator()
@@ -176,10 +190,10 @@ class FractalWindow(imgui_window_base.ImGuiWindowBase):
             imgui.align_text_to_frame_padding()
             imgui.text("Path Speed")
             imgui.same_line()
-            _, self.path_follow_audio_speed = imgui.checkbox("##path_speed_follow_audio", self.path_follow_audio_speed)
+            _, self._path_follow_audio_speed = imgui.checkbox("##path_speed_follow_audio", self._path_follow_audio_speed)
             if imgui.is_item_hovered():
                 imgui.set_tooltip("Follow Audio Settings")
-            if self.path_follow_audio_speed:
+            if self._path_follow_audio_speed:
                 self.settings.path_speed = self.settings.sample_freq
             else:
                 imgui.same_line()
@@ -203,7 +217,7 @@ class FractalWindow(imgui_window_base.ImGuiWindowBase):
             # imgui.push_style_color(imgui.COLOR_FRAME_BACKGROUND, *imgui.color_convert_hsv_to_rgb(frame_time / 5, .6, .6), .54)
             # imgui.push_style_color(imgui.COLOR_FRAME_BACKGROUND_HOVERED, *imgui.color_convert_hsv_to_rgb(frame_time / 5, .7, .7), .4)
             # imgui.push_style_color(imgui.COLOR_FRAME_BACKGROUND_ACTIVE, *imgui.color_convert_hsv_to_rgb(frame_time / 5, .8, .8), .67)
-            changed, self.rainbow_path = imgui.checkbox("##rainbow_color", self.rainbow_path)
+            changed, self._rainbow_path = imgui.checkbox("##rainbow_color", self._rainbow_path)
             # imgui.pop_style_color(3)
             if imgui.is_item_hovered():
                 imgui.set_tooltip("Rainbow Color")
@@ -215,8 +229,8 @@ class FractalWindow(imgui_window_base.ImGuiWindowBase):
 
             if imgui.button("Reset Settings##path"):
                 self.settings.resetPathSettings()
-                self.path_follow_audio_speed = True
-                self.rainbow_path = False
+                self._path_follow_audio_speed = True
+                self._rainbow_path = False
             imgui.pop_item_width()
             imgui.unindent(indent)
             imgui.separator()
@@ -229,11 +243,11 @@ class FractalWindow(imgui_window_base.ImGuiWindowBase):
             imgui.push_item_width(item_width)
             _, self.settings.volume = imgui.slider_float("Volume", self.settings.volume, 0., 1.)
 
-            changed, self.do_audio_fade = imgui.checkbox("Fade", self.do_audio_fade)
+            changed, self._do_audio_fade = imgui.checkbox("Fade", self._do_audio_fade)
             if changed:
-                self.settings.audio_fade = 7 if self.do_audio_fade else 0
+                self.settings.audio_fade = 7 if self._do_audio_fade else 0
                 self.syn.updateFadeMode()
-            if self.do_audio_fade:
+            if self._do_audio_fade:
                 changed, self.settings.audio_fade = imgui.slider_float("Fade Factor", self.settings.audio_fade, 2., 10., flags=imgui.SLIDER_FLAGS_LOGARITHMIC)
                 if changed:
                     self.syn.updateFadeMode()
@@ -287,11 +301,11 @@ class FractalWindow(imgui_window_base.ImGuiWindowBase):
         self.mouse_pos = (x, y)
         if not imgui.get_io().want_capture_mouse:
             if self.wnd.mouse_states.left:
-                self.dragging = True
+                self._dragging = True
                 self.rndr.drag((dx, dy))
             if self.wnd.mouse_states.middle:
-                self.mouse_dragging_delta_for_audio_trigger.x += dx
-                self.mouse_dragging_delta_for_audio_trigger.y += dy
+                self._mouse_dragging_delta_for_audio_trigger.x += dx
+                self._mouse_dragging_delta_for_audio_trigger.y += dy
 
     def mouse_press_event(self, x, y, button):
         super().mouse_press_event(x, y, button)
@@ -303,9 +317,9 @@ class FractalWindow(imgui_window_base.ImGuiWindowBase):
         super().mouse_release_event(x, y, button)
         if not imgui.get_io().want_capture_mouse:
             if button == 1:
-                if not self.dragging:
+                if not self._dragging:
                     self._fractalInteract((x, y))
-                self.dragging = False
+                self._dragging = False
             elif button == 2:
                 self.syn.stopSound()
                 self.rndr.stopPathVisualization()

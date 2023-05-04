@@ -1,5 +1,6 @@
 import logging
 import math
+from math import floor
 import random
 from typing import Tuple
 import numpy as np
@@ -10,7 +11,9 @@ from pyrr import Matrix44
 
 import fractals
 from settings import Settings
+from utils import color_utils
 
+COLOR_PALETTE_SAMPLES = 1024
 
 class Renderer:
     # noinspection PyTypeChecker
@@ -43,6 +46,8 @@ class Renderer:
         self.static_frames = 1
         self.rendered = True
         self.should_apply_aa = True
+        self._color_palette_tex: gl.Texture = None
+        self.reloadColorPalette()
 
         # ----- Path rendering -----
         self._path_program: gl.Program = None
@@ -91,6 +96,23 @@ class Renderer:
                 if self._path_program is not None:
                     self._path_program.release()
                 self._path_program = new_path_program
+
+    def reloadColorPalette(self):
+        data = np.full(shape=COLOR_PALETTE_SAMPLES*4, fill_value=255, dtype=np.uint8)
+        gradient = self._settings.color_palette
+        for i in range(COLOR_PALETTE_SAMPLES):
+            color = color_utils.getColorInGradient(gradient, i / COLOR_PALETTE_SAMPLES, True)
+            data[i*4+0] = min(max(floor(color[0]*255), 0), 255)
+            data[i*4+1] = min(max(floor(color[1]*255), 0), 255)
+            data[i*4+2] = min(max(floor(color[2]*255), 0), 255)
+
+        if self._color_palette_tex is not None:
+            self._color_palette_tex.release()
+        self._color_palette_tex = self._ctx.texture((COLOR_PALETTE_SAMPLES, 1), components=4, dtype="nu1", data=data)
+        self._color_palette_tex.filter = (gl.LINEAR, gl.NEAREST)
+        self._color_palette_tex.repeat_x = True
+
+        self.reRender()
 
     def reRender(self):
         self.static_frames = 1
@@ -173,7 +195,7 @@ class Renderer:
         self.rendered = True
 
         self._last_frame.use(0)
-        self._main_program["lastFrame"] = 0
+        self._main_program["uLastFrame"] = 0
         self._main_program["uOldFramesMixFactor"] = old_frame_mix
         self._main_program["uHashSeed"] = random.randint(0, (2 ** 31) - 1)
         # self.main_program["uTime"] = frame_time
@@ -188,6 +210,10 @@ class Renderer:
         if not self.should_apply_aa:
             swizzle = 0
         self._main_program["uSwizzleMultiplier"] = swizzle if self.static_frames > 1 else 0
+
+        self._color_palette_tex.use(1)
+        self._main_program["uColorPalette"] = 1
+        self._main_program["uColorChangeSpeed"] = self._settings.color_change_speed
         self._main_program["uSamples"] = self._settings.render_samples
         self._main_program["uIters"] = self._settings.iterations
         self._main_program["uEscapeThreshold"] = self._settings.render_escape_threshold ** 2
@@ -289,6 +315,10 @@ class Renderer:
         self._ctx.disable(gl.CULL_FACE)
         self._ctx.enable(gl.BLEND)
         path_vao.render(mode=gl.LINE_STRIP_ADJACENCY)
+
+        vbo.release()
+        ibo.release()
+        path_vao.release()
 
     def frame(self, frame_time: float, dt: float):
         self.frame_time = frame_time

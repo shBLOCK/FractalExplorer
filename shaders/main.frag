@@ -26,11 +26,13 @@ uniform float uAspectRatio;
 uniform FLOAT uScale;
 uniform VEC2 uTranslation;
 
-uniform sampler2D lastFrame;
+uniform sampler2D uLastFrame;
 uniform float uOldFramesMixFactor;
 uniform int uHashSeed;
-
 uniform double uSwizzleMultiplier;
+
+uniform sampler2D uColorPalette;
+uniform float uColorChangeSpeed;
 uniform int uIters;
 uniform float uEscapeThreshold;
 
@@ -135,9 +137,9 @@ vec3 fractal(VEC2 z, VEC2 c) {
     }
 
     if (i != uIters) {
-        float n1 = sin(float(i) * 0.1) * 0.5 + 0.5;
-        float n2 = cos(float(i) * 0.1) * 0.5 + 0.5;
-        return vec3(n1, n2, 1.0) * (1.0 - float(FLAG_USE_COLOR)*0.85);
+        float palettePos = float(i) * uColorChangeSpeed;
+        vec3 paletteColor = texture(uColorPalette, vec2(palettePos, .5)).rgb;
+        return paletteColor * (1.0 - float(FLAG_USE_COLOR)*0.85);
     } else if (FLAG_USE_COLOR) {
         sumz = abs(sumz) / FLOAT(uIters);
         vec3 n1 = sin(vec3(abs(sumz * 5.0))) * 0.45 + 0.5;
@@ -171,7 +173,7 @@ void main() {
 
     color = clamp(color, 0., 1.);
 
-    vec3 lastFrameColor = texture(lastFrame, vec2(fragCoord.x, -fragCoord.y)).rgb;
+    vec3 lastFrameColor = texture(uLastFrame, vec2(fragCoord.x, -fragCoord.y)).rgb;
     color = mix(color, lastFrameColor, uOldFramesMixFactor);
 
     fragColor = vec4(color, 1.);

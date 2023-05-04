@@ -1,4 +1,4 @@
-from typing import List, Tuple, Sequence
+from typing import List, Tuple
 from dataclasses import dataclass
 import imgui
 # noinspection PyProtectedMember
@@ -7,7 +7,10 @@ from imgui.core import _DrawList as DrawList
 from imgui.core import _IO as IO
 from pygame.math import Vector2
 
-Color = Tuple[float, float, float, float] | Tuple[float, float, float]
+if __name__ == '__main__':
+    from color_utils import Color, ColorGradient, getColorInGradient
+else:
+    from utils.color_utils import Color, ColorGradient, getColorInGradient
 
 def colorU32(color: Color):
     if len(color) == 3:
@@ -17,36 +20,10 @@ def colorU32(color: Color):
 def get_style_color_u32(idx: int):
     return colorU32(imgui.get_style_color_vec_4(idx))
 
-def lerpColor(color_a: Color, color_b: Color, t: float) -> Color:
-    t = max(min(t, 1), 0)
-    # noinspection PyTypeChecker
-    return tuple(a+(b-a)*t for a,b in zip(color_a, color_b))
-
 @dataclass
 class _ColorMark:
     pos: float
     color: Color
-
-ColorGradient = Sequence[Tuple[float, Color]]
-ColorGradient.__doc__ = """List of color \"Key Frames\", which is a tuple of (<position> (0 to 1), <color> (tuple of 3 or 4 floats))."""
-
-def getColorInGradient(gradient: ColorGradient, pos: float, repeating: bool) -> Color:
-    if not repeating:
-        if pos < 0 or pos > 1:
-            raise ValueError(f"Position out of range ({pos})")
-    else:
-        pos %= 1
-
-    if len(gradient) == 1:
-        return gradient[0][1]
-
-    last_mark = gradient[0]
-    for m in gradient[1:]:
-        if last_mark[0] <= pos <= m[0]:
-            return lerpColor(last_mark[1], m[1], (pos - last_mark[0]) / (m[0] - last_mark[0]) if m[0] != last_mark[0] else 0)
-        last_mark = m
-    if repeating:
-        return lerpColor(last_mark[1], gradient[0][1], (pos - last_mark[0]) / ((gradient[0][0] + 1) - last_mark[0]))
 
 def drawGradient(gradient: ColorGradient, repeating: bool, x0, y0, x1, y1, border: bool = True):
     draw_list = imgui.get_window_draw_list()
@@ -329,7 +306,8 @@ class ColorGradientEdit:
         return modified
 
 if __name__ == "__main__":
-    import imgui_window_base, math
+    import imgui_window_base
+
     class TestWindow(imgui_window_base.ImGuiWindowBase):
         title = "Widget Test"
         clear_color = (.3,.3,.3,1)

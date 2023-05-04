@@ -1,6 +1,11 @@
+import random
+import time
+from math import sin, cos, pi
 from enum import Enum
 
 import fractals
+from utils import color_utils
+
 
 class Settings:
     # noinspection PyTypeChecker
@@ -14,6 +19,8 @@ class Settings:
         self.render_samples = None
         self.static_frame_mix = None
         self.double_precision = None
+        self.color_palette = None
+        self.color_change_speed = None
         self.resetRenderSettings()
 
         # Path Settings
@@ -39,6 +46,9 @@ class Settings:
         self.render_samples = 1
         self.static_frame_mix = .5
         self.double_precision = False
+        # self.color_palette = color_utils.generateRainbowGradient(18)
+        self.color_palette = color_utils.gradientFromFunc(10, True, lambda t: (sin(t*2*pi)*.5+.5, cos(t*2*pi)*.5+.5, 1.))
+        self.color_change_speed = .016
 
     def resetPathSettings(self):
         self.path_width = 1.

@@ -124,8 +124,8 @@ PY_INSERT_RANDOMLY_GENERATED_FUNCTIONS;
 vec3 fractal(VEC2 z, VEC2 c) {
     VEC2 pz = z;
     VEC3 sumz = VEC3(0.0, 0.0, 0.0);
-    int i;
-    for (i = 0; i < uIters; ++i) {
+    int it;
+    for (it = 0; it < uIters; ++it) {
         VEC2 ppz = pz;
         pz = z;
         // FRACTAL_FUNC would be replaced with one of the fractal functions
@@ -136,8 +136,10 @@ vec3 fractal(VEC2 z, VEC2 c) {
         sumz.z += dot(z - ppz, z - ppz);
     }
 
-    if (i != uIters) {
-        float palettePos = float(i) * uColorChangeSpeed;
+    if (it != uIters) {
+//        float k = 2.3;
+//        float sit = it - log2(log2(dot(z,z))/(log2(uEscapeThreshold)))/log2(k);
+        float palettePos = float(it) * uColorChangeSpeed;
         vec3 paletteColor = texture(uColorPalette, vec2(palettePos, .5)).rgb;
         return paletteColor * (1.0 - float(FLAG_USE_COLOR)*0.85);
     } else if (FLAG_USE_COLOR) {
@@ -167,6 +169,7 @@ void main() {
         int seed = int(fragCoord.x * 2000.) + int(fragCoord.y * 1000. * 2000.) + smp * 2000 * 1000 * 1000 + uHashSeed;
         VEC2 swizzle = VEC2(hash2(seed) - vec2(.5)) * FLOAT(uSwizzleMultiplier);
         VEC2 fractPos = position + swizzle;
+        //TODO: starting pos is either fractPos or VEC2(0.), should be determained for indivisual fractals (by the user)
         color += fractal(fractPos, fractPos);
     }
     color /= uSamples;

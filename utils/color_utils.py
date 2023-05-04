@@ -6,6 +6,7 @@ Color = Tuple[float, float, float, float] | Tuple[float, float, float]
 ColorGradient = Sequence[Tuple[float, Color]]
 ColorGradient.__doc__ = """List of color \"Key Frames\", which is a tuple of (<position> (0 to 1), <color> (tuple of 3 or 4 floats))."""
 
+#TODO: customizable gradient lerping methods
 def lerpColor(color_a: Color, color_b: Color, t: float) -> Color:
     t = max(min(t, 1), 0)
     # noinspection PyTypeChecker

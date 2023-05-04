@@ -42,7 +42,7 @@ class Settings:
 
     def resetRenderSettings(self):
         self.iterations = 2048
-        self.render_escape_threshold = 100000.
+        self.render_escape_threshold = 1000.
         self.render_samples = 1
         self.static_frame_mix = .5
         self.double_precision = False

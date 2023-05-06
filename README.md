@@ -38,6 +38,6 @@ Notes for developers
   * ModernGL
   * PySDL2
   * imgui-bundle (**Must be the LATEST version on GITHUB (Not on pypi yet)!!!**)
-  * PyAudio
+  * miniaudio
   * pygame
   * scipy

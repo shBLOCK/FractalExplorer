@@ -24,9 +24,11 @@ Features
 
 Planned
 ---------------
+* Fractal configuration saving and loading from files
+  * Better fractal selection interface (image/sound preview)
 * Support for Julia sets
-* Orbit coloring
-* Easy-to-use fractal function editor
+* Orbit coloring (customizable)
+* Easy-to-use fractal function editor (node-based editor)
 * Audio performance improvement (multi-processing?)
 * Improve stability (better handling of arithmetic and render errors)
 * Improving fractal function generator

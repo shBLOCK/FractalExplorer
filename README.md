@@ -9,7 +9,7 @@ https://youtu.be/GiAj9WW1OfQ
 
 Features
 ---------------
-* Fractal **Hot-loading** ta Runtime
+* Fractal **Hot-loading** at Runtime
   * Integrated **Random fractal function generator**
 * Explore Real-Time fractal images
   * **64-bit** Precision support
@@ -26,7 +26,6 @@ Planned
 ---------------
 * Support for Julia sets
 * Orbit coloring
-* Customizable color palette
 * Easy-to-use fractal function editor
 * Audio performance improvement (multi-processing?)
 * Improve stability (better handling of arithmetic and render errors)
@@ -34,4 +33,11 @@ Planned
 
 Notes for developers
 ---------------
-* This program is made with Python and its great ModernGL library.
+* This project uses python.
+* Mainly used libraries (does not include all libraries needed):
+  * ModernGL
+  * PySDL2
+  * imgui-bundle (**Must be the LATEST version on GITHUB (Not on pypi yet)!!!**)
+  * PyAudio
+  * pygame
+  * scipy

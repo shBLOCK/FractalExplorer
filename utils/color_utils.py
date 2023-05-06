@@ -1,7 +1,8 @@
 import colorsys
 from typing import Tuple, Sequence, Callable
 
-Color = Tuple[float, float, float, float] | Tuple[float, float, float]
+# Color = Tuple[float, float, float, float] | Tuple[float, float, float]
+Color = Tuple[float, float, float, float]
 
 ColorGradient = Sequence[Tuple[float, Color]]
 ColorGradient.__doc__ = """List of color \"Key Frames\", which is a tuple of (<position> (0 to 1), <color> (tuple of 3 or 4 floats))."""
@@ -31,7 +32,7 @@ def getColorInGradient(gradient: ColorGradient, pos: float, repeating: bool) -> 
         return lerpColor(last_mark[1], gradient[0][1], (pos - last_mark[0]) / ((gradient[0][0] + 1) - last_mark[0]))
 
 def generateRainbowGradient(marks: int = 6) -> ColorGradient:
-    return [(i/marks, colorsys.hsv_to_rgb(i/marks, 1, 1)) for i in range(marks)]
+    return [(i/marks, (*colorsys.hsv_to_rgb(i/marks, 1, 1), 1)) for i in range(marks)]
 
 def gradientFromFunc(marks: int, repeating: bool, func: Callable[[float], Color]):
     div = marks if repeating else (marks - 1)

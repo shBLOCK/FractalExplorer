@@ -1,6 +1,6 @@
 #version 400 compatibility
 //#extension GL_NV_gpu_shader_fp64 : enable
-#extension GL_NV_gpu_shader5 : enable
+//#extension GL_NV_gpu_shader5 : enable
 //#extension GL_ARB_gpu_shader_fp64 : enable
 //#pragma optionNV(fastmath off)
 //#pragma optionNV(fastprecision off)
@@ -80,9 +80,13 @@ VEC2 cx_sin(VEC2 a) {
 VEC2 cx_cos(VEC2 a) {
     return VEC2(cosF(a.x) * coshF(a.y), -sinF(a.x) * sinhF(a.y));
 }
+//TODO: cx_tan(VEC2 a, VEC2 b)
 VEC2 cx_exp(VEC2 a) {
     return expF(a.x) * VEC2(cosF(a.y), sinF(a.y));
 }
+//TODO: cx_pow(VEC2 a, VEC2 b)
+//TODO: cx_log(VEC2 a, VEC2 b)
+//TODO: cx_sqrt(VEC2 a)
 
 // ---------- Fractals Begin ---------
 VEC2 mandelbrot(VEC2 z, VEC2 c) {

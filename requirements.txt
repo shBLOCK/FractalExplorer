@@ -1,0 +1,11 @@
+numpy
+moderngl
+pygame-ce
+scipy
+miniaudio
+glfw
+watchdog
+viztracer
+pysdl2
+pysdl2-dll
+objprint

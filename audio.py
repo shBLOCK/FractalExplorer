@@ -82,6 +82,8 @@ class FracAudioSource:
     def _audioGenerator(self):
         frame_count = yield b""  # generator initialization
 
+        sample_max = 0.0
+
         try:
             while True:
                 if self.iter_stopped or not self._generating:
@@ -117,7 +119,7 @@ class FracAudioSource:
                 sample_buffer_arr_y = np.imag(sample_buffer_arr)
 
                 # Normalize samples
-                sample_max = np.max(np.abs(sample_buffer_arr_x))
+                sample_max = max(np.max(np.abs(sample_buffer_arr_x)), sample_max)
                 sample_max = max(np.max(np.abs(sample_buffer_arr_y)), sample_max)
                 sample_buffer_arr_x /= sample_max
                 sample_buffer_arr_y /= sample_max

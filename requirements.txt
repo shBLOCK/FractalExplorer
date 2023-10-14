@@ -1,0 +1,14 @@
+moderngl>=5.8.2
+moderngl_window>=2.4.4
+#pygame<=2.3.0
+gdmath
+imgui-bundle>=0.9.0
+pywin32
+PySDL2
+pysdl2-dll
+watchdog
+viztracer
+miniaudio
+numpy
+scipy
+pyrr

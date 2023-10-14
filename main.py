@@ -10,7 +10,7 @@ import moderngl as gl
 import moderngl_window
 from moderngl_window.timers.clock import Timer
 from imgui_bundle import imgui
-from pygame import Vector2
+from gdmath import Vec2
 
 from utils import shader_reload_observer, imgui_utils
 import utils.window
@@ -33,6 +33,7 @@ class FractalWindow(moderngl_window.WindowConfig):
     fullscreen = False
     resizable = True
     vsync = True
+    aspect_ratio = None
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -49,9 +50,9 @@ class FractalWindow(moderngl_window.WindowConfig):
 
         self._generated_fractal_cnt = 0
 
-        self.mouse_pos = (0, 0)
+        # self.mouse_pos = (0, 0)
         self._dragging = False
-        self._mouse_dragging_delta_for_audio_trigger = Vector2()
+        self._mouse_dragging_delta_for_audio_trigger = Vec2()
         self._color_gradient_edit = imgui_utils.ColorGradientEdit(
             identifier="##fractal_color_palette",
             gradient=self.settings.color_palette,
@@ -70,9 +71,9 @@ class FractalWindow(moderngl_window.WindowConfig):
         if self._rainbow_path:
             self.settings.path_color = (*imgui.color_convert_hsv_to_rgb(frame_time / 5, 1, 1), 1)
 
-        if self._mouse_dragging_delta_for_audio_trigger.length_squared() > 10*10:
+        if self._mouse_dragging_delta_for_audio_trigger.length_sqr > 10*10:
             self._fractalInteract(self.mouse_pos)
-            self._mouse_dragging_delta_for_audio_trigger.update(0, 0)
+            self._mouse_dragging_delta_for_audio_trigger = Vec2(0)
 
         self.syn.update()
 
@@ -111,7 +112,12 @@ class FractalWindow(moderngl_window.WindowConfig):
         imgui.push_style_var(imgui.StyleVar_.window_rounding, 8.)
         imgui.push_style_color(imgui.Col_.window_bg, (.059, .059, .059, .8))
         # imgui.set_next_window_pos((0, self.wnd.height / 2), imgui.Cond_.always, (0, .5))
-        imgui.begin("Settings", flags=imgui.WindowFlags_.always_auto_resize.value | imgui.WindowFlags_.no_saved_settings.value)
+        window_visible, _ = imgui.begin("Settings", flags=imgui.WindowFlags_.always_auto_resize.value | imgui.WindowFlags_.no_saved_settings.value)
+        if not window_visible:
+            imgui.end()
+            imgui.pop_style_color()
+            imgui.pop_style_var()
+            return
 
         indent = 8
 
@@ -303,9 +309,16 @@ class FractalWindow(moderngl_window.WindowConfig):
         if not imgui.get_io().want_capture_mouse:
             self.rndr.scroll(y_offset, self.rndr.toNDR(self.mouse_pos))
 
+    @property
+    def mouse_pos(self) -> Tuple[float, float]:
+        mp = imgui.get_mouse_pos()
+        wp = imgui.get_main_viewport().pos
+        # noinspection PyRedundantParentheses
+        return (mp.x - wp.x, mp.y - wp.y)
+
     def mouse_drag_event(self, x, y, dx, dy):
         super().mouse_drag_event(x, y, dx, dy)
-        self.mouse_pos = (x, y)
+        # self.mouse_pos = (x, y)
         if not imgui.get_io().want_capture_mouse:
             if self.wnd.mouse_states.left:
                 self._dragging = True
@@ -325,7 +338,7 @@ class FractalWindow(moderngl_window.WindowConfig):
         if not imgui.get_io().want_capture_mouse:
             if button == 1:
                 if not self._dragging:
-                    self._fractalInteract((x, y))
+                    self._fractalInteract(self.mouse_pos)
                 self._dragging = False
             elif button == 2:
                 self.syn.stopSound()
@@ -339,7 +352,7 @@ class FractalWindow(moderngl_window.WindowConfig):
 
     def mouse_position_event(self, x, y, dx, dy):
         super().mouse_position_event(x, y, dx, dy)
-        self.mouse_pos = (x, y)
+        # self.mouse_pos = (x, y)
 
     def resize(self, width: int, height: int):
         super().resize(width, height)

@@ -41,5 +41,5 @@ Notes for developers
   * PySDL2
   * imgui-bundle (**Must be the LATEST version on GITHUB (Not on pypi yet)!!!**)
   * miniaudio
-  * pygame
+  * gdmath
   * scipy

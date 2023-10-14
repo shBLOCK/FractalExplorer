@@ -1,7 +1,6 @@
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 import win32gui
-import pygame as pg
 
 MONITORED_FILES = (
     "shaders\\main.vert",

@@ -6,7 +6,7 @@ from typing import Tuple
 import numpy as np
 import moderngl as gl
 from moderngl_window.context.base import BaseWindow
-from pygame.math import Vector2
+from gdmath import Vec2
 from pyrr import Matrix44
 
 import fractals
@@ -25,9 +25,9 @@ class Renderer:
 
         # ----- Camera -----
         self.scale = 100
-        self.translation = Vector2(0, 0)
+        self.translation = Vec2(0, 0)
         self.target_scale = 1.5
-        self.target_translation = Vector2(0, 0)
+        self.target_translation = Vec2(0, 0)
 
         # ----- Fractal image rendering -----
         self._screen_quad_vbo = self._ctx.buffer(np.array([
@@ -123,23 +123,23 @@ class Renderer:
         self.stopPathVisualization()
 
     def toNDR(self, pixel_pos: Tuple[float, float]):
-        return Vector2(pixel_pos[0] / self._window.width, -pixel_pos[1] / self._window.height) * 2 - Vector2(1, -1)
+        return Vec2(pixel_pos[0] / self._window.width, -pixel_pos[1] / self._window.height) * 2 - Vec2(1, -1)
 
-    def transform(self, ndr: Vector2):
-        return Vector2(ndr.x * self._window.aspect_ratio, ndr.y) * self.scale + self.translation
+    def transform(self, ndr: Vec2):
+        return Vec2(ndr.x * self._window.aspect_ratio, ndr.y) * self.scale + self.translation
 
-    def scroll(self, delta: float, ndr: Vector2):
-        ndr = Vector2(-ndr.x * self._window.aspect_ratio, -ndr.y)
+    def scroll(self, delta: float, ndr: Vec2):
+        ndr = Vec2(-ndr.x * self._window.aspect_ratio, -ndr.y)
         delta_scale = -delta * self.target_scale / 5
         self.target_scale += delta_scale
         delta = ndr * delta_scale
         self.target_translation += delta
 
     def drag(self, rel: Tuple[float, float]):
-        self.target_translation += Vector2(-rel[0], rel[1]) / self._window.height * 2 * self.scale
+        self.target_translation += Vec2(-rel[0], rel[1]) / self._window.height * 2 * self.scale
 
     def resetTransformation(self):
-        self.target_translation = Vector2(0)
+        self.target_translation = Vec2(0)
         self.target_scale = 1.5
 
     def _updateTransformation(self, dt: float):
@@ -148,8 +148,8 @@ class Renderer:
 
         self.target_scale = max(self.target_scale, 1E-16 if self._settings.double_precision else 1E-7)
 
-        if (self.target_translation - self.translation).length_squared() < (self.scale / self._window.width * 2)**2:
-            self.translation.update(self.target_translation)
+        if (self.target_translation - self.translation).length_sqr < (self.scale / self._window.width * 2)**2:
+            self.translation = +self.target_translation
         if abs(self.target_scale - self.scale) < self.target_scale * (2 / self._window.width):
             self.scale = self.target_scale
 
@@ -173,7 +173,7 @@ class Renderer:
         program["uTranslation"] = self.translation
 
     def _renderFractalImage(self):
-        if self.scale == self.target_scale and self.translation.x == self.target_translation.x and self.translation.y == self.target_translation.y:
+        if self.scale == self.target_scale and self.translation == self.target_translation:
             self.static_frames += 1
             if self._settings.static_frame_mix == 0:
                 old_frame_mix = 0
@@ -197,7 +197,7 @@ class Renderer:
         self._last_frame.use(0)
         self._main_program["uLastFrame"] = 0
         self._main_program["uOldFramesMixFactor"] = old_frame_mix
-        self._main_program["uHashSeed"] = random.randint(0, (2 ** 31) - 1)
+        self._main_program["uHashSeed"] = random.randint(-(2 ** 31), (2 ** 31) - 1)
         # self.main_program["uTime"] = frame_time
 
         self._applyCameraUniforms(self._main_program)

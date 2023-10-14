@@ -2,7 +2,7 @@ from typing import List, Tuple
 from dataclasses import dataclass
 
 from imgui_bundle import imgui
-from pygame.math import Vector2
+from gdmath import Vec2
 
 if __name__ == '__main__':
     from color_utils import Color, ColorGradient, getColorInGradient
@@ -140,7 +140,7 @@ class ColorGradientEdit:
         imgui.end_tooltip()
 
     # noinspection PyArgumentList
-    def _processHandle(self, mark: _ColorMark, io, draw_list, pos0: Vector2, pos1: Vector2, width: float, mark_size: float) -> Tuple[bool, bool]:
+    def _processHandle(self, mark: _ColorMark, io, draw_list, pos0: Vec2, pos1: Vec2, width: float, mark_size: float) -> Tuple[bool, bool]:
         """:returns if this mark should get removed and if this mark was modified"""
 
         x = pos0.x + mark.pos * width
@@ -238,9 +238,9 @@ class ColorGradientEdit:
         width = imgui.calc_item_width()
         height = imgui.get_frame_height()
         imgui.invisible_button("##tet", (width, height + mark_size * 1.5))
-        pos0 = Vector2(*imgui.get_item_rect_min())
+        pos0 = Vec2(*imgui.get_item_rect_min())
         pos0.x += max(mark_size / 2 - window_padding.x + 5, 0)
-        pos1 = Vector2(*imgui.get_item_rect_max())
+        pos1 = Vec2(*imgui.get_item_rect_max())
         pos1.x -= max(mark_size / 2 - window_padding.x + 5, 0)
         pos1.y = pos0.y + height
         width = pos1.x - pos0.x

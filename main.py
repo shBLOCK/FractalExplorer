@@ -1,7 +1,6 @@
 import logging
 import weakref
 
-import viztracer
 import os
 import sys
 from typing import Tuple
@@ -12,7 +11,11 @@ from moderngl_window.timers.clock import Timer
 from imgui_bundle import imgui
 from gdmath import Vec2
 
-from utils import shader_reload_observer, imgui_utils
+from utils import imgui_utils
+try:
+    from utils import shader_reload_observer
+except ImportError:
+    pass
 import utils.window
 import settings
 from settings import Settings
@@ -93,8 +96,11 @@ class FractalWindow(moderngl_window.WindowConfig):
         print(py_exp)
         print(gl_exp)
         print("-"*30)
-        with open("generated_fractal_functions.txt", "a") as f:
-            f.write(f"{py_exp}\n{gl_exp}\n\n")
+        try:
+            with open("generated_fractal_functions.txt", "a") as f:
+                f.write(f"{py_exp}\n{gl_exp}\n\n")
+        except IOError as e:
+            print(f"Failed to save generated fractal function: {e}")
 
         self._generated_fractal_cnt += 1
         new_frac = fractals.addRuntimeFractalType(
@@ -287,6 +293,9 @@ class FractalWindow(moderngl_window.WindowConfig):
 
     # noinspection PyArgumentList
     def detectDebugShaderReload(self):
+        if "shader_reload_observer" not in globals():
+            return
+
         if shader_reload_observer.should_reload:
             print("File change detected, reloading shaders.")
             try:
@@ -427,6 +436,7 @@ def main():
         )
 
 if USE_VIZTRACER:
+    import viztracer
     vt = viztracer.viztracer.VizTracer()
     vt.start()
 

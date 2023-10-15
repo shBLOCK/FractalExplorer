@@ -296,13 +296,14 @@ class FractalWindow(moderngl_window.WindowConfig):
             shader_reload_observer.should_reload = False
 
     def _fractalInteract(self, pixel_pos: Tuple[int, int]):
+        pixel_pos = pixel_pos
         pos = self.rndr.transform(self.rndr.toNDR(pixel_pos))
 
         if not self.syn.should_fade:
             self.syn.stopSound()
         self.syn.playFractal(self.settings.fractal, complex(pos.x, pos.y), None, 1.0)
 
-        self.rndr.startPathVisualization(pixel_pos)
+        self.rndr.startPathVisualization(pos)
 
     def mouse_scroll_event(self, x_offset, y_offset):
         super().mouse_scroll_event(x_offset, y_offset)

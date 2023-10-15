@@ -223,9 +223,7 @@ class Renderer:
 
         self._ctx.copy_framebuffer(src=self._ctx.screen, dst=self._last_frame_fbo)
 
-    def startPathVisualization(self, pixel_pos: Tuple[int, int]):
-        pos = self.transform(self.toNDR(pixel_pos))
-
+    def startPathVisualization(self, pos: Vec2):
         self.path_buffer.clear()
         self._path_c_point = complex(pos.x, pos.y)
         self._path_current_z = complex(pos.x, pos.y)

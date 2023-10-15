@@ -30,7 +30,7 @@ USE_VIZTRACER = False
 os.environ["MODERNGL_WINDOW"] = "pyglet"
 
 class FractalWindow(moderngl_window.WindowConfig):
-    title = "Fractal Explorer"
+    title = "Fractal Explorer - By shBLOCK"
     gl_version = (4, 0)
     window_size = (1280, 720)
     fullscreen = False

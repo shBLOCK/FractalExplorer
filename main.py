@@ -302,7 +302,7 @@ class FractalWindow(moderngl_window.WindowConfig):
             self.syn.stopSound()
         self.syn.playFractal(self.settings.fractal, complex(pos.x, pos.y), None, 1.0)
 
-        # self.rndr.startPathVisualization(pixel_pos)
+        self.rndr.startPathVisualization(pixel_pos)
 
     def mouse_scroll_event(self, x_offset, y_offset):
         super().mouse_scroll_event(x_offset, y_offset)

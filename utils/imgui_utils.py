@@ -336,7 +336,7 @@ if __name__ == "__main__":
             self.buildImGui(frame_time, dt)
 
         def buildImGui(self, frame_time: float, dt: float):
-            imgui.show_demo_window(False)
+            # imgui.show_demo_window(False)
 
             if imgui.begin("Test", flags=imgui.WindowFlags_.no_saved_settings)[0]:
                 imgui.text("Widget Test")

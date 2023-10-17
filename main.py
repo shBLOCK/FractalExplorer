@@ -1,3 +1,4 @@
+import colorsys
 import logging
 import weakref
 
@@ -105,7 +106,7 @@ class FractalWindow(moderngl_window.WindowConfig):
         self.gui.build()
 
         if self._rainbow_path:
-            self.settings.path_color = (*imgui.color_convert_hsv_to_rgb(frame_time / 5, 1, 1), 1)
+            self.settings.path_color = (*colorsys.hsv_to_rgb(frame_time / 5, 1, 1), 1)
 
         if self._mouse_dragging_delta_for_audio_trigger.length_sqr > 10*10:
             self._fractalInteract(self.mouse_pos)

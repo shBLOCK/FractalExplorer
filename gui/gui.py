@@ -12,9 +12,9 @@ class Gui:
         imgui.push_style_var(imgui.StyleVar_.window_rounding, 5.)
         imgui.push_style_color(imgui.Col_.window_bg, (.059, .059, .059, .8))
 
-        imgui.show_demo_window(True)
+        # imgui.show_demo_window(True)
 
-        self.buildMainToolBar()
+        # self.buildMainToolBar()
 
         imgui.pop_style_var()
         imgui.pop_style_color()

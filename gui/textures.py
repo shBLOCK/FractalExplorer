@@ -1,9 +1,9 @@
-from utils.assets import assetsPath
+from utils.assets import assets_path
 import moderngl_window as mglw
 
 
 def _load(name, wnd: mglw.WindowConfig) -> int:
-    tex = wnd.load_texture_2d(assetsPath(f"assets/textures/{name}.png"), flip=False)
+    tex = wnd.load_texture_2d(assets_path(f"assets/textures/{name}.png"), flip=False)
     return tex.glo
 
 class Textures:

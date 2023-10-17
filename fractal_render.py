@@ -12,7 +12,7 @@ from pyrr import Matrix44
 import fractals
 from settings import Settings
 from utils import color_utils
-from utils.utils import resource_path
+from utils.assets import assets_path
 from utils import coordinate_axis
 
 COLOR_PALETTE_SAMPLES = 1024
@@ -78,7 +78,7 @@ class FractalRenderer:
     def reloadShaders(self, reload_source: bool):
         v_source, f_source = self._vsh_source, self._fsh_source
         if reload_source:
-            with open(resource_path("shaders/main.vert")) as vsh_file, open(resource_path("shaders/main.frag")) as fsh_file:
+            with open(assets_path("shaders/main.vert")) as vsh_file, open(assets_path("shaders/main.frag")) as fsh_file:
                 v_source, f_source = vsh_file.read(), fsh_file.read()
         org_v_source, org_f_source = v_source, f_source
         f_source = self._preProcessMainFragmentShader(f_source)
@@ -96,8 +96,8 @@ class FractalRenderer:
         self.reRender()
 
         if reload_source:
-            with open(resource_path("shaders/path.vert")) as path_vsh, open(resource_path("shaders/path.geom")) as path_gsh, open(
-                    resource_path("shaders/path.frag")) as path_fsh:
+            with open(assets_path("shaders/path.vert")) as path_vsh, open(assets_path("shaders/path.geom")) as path_gsh, open(
+                    assets_path("shaders/path.frag")) as path_fsh:
                 new_path_program = self._ctx.program(vertex_shader=path_vsh.read(), geometry_shader=path_gsh.read(), fragment_shader=path_fsh.read())
                 if self._path_program is not None:
                     self._path_program.release()

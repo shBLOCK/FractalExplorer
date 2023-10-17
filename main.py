@@ -5,8 +5,6 @@ import weakref
 import sdl2
 import sdl2.touch
 import viztracer
-import objprint
-import os
 import sys
 from typing import Tuple
 
@@ -23,6 +21,7 @@ from settings import Settings
 import fractal_render
 import fractals
 import audio
+import gui.gui
 
 import random_fractal_expression_generator
 
@@ -42,16 +41,17 @@ class FractalWindow(moderngl_window.WindowConfig):
 
         self.wnd.exit_key = None
         self.wnd.sdl_event_func = self.sdl_event
-        
+
+        self.gui = gui.gui.Gui(self)
         self.settings = Settings()
-        
+
         self.rndr = fractal_render.FractalRenderer(self.ctx, self.wnd, self.settings)
         self.syn = audio.Synthesizer(self.settings)
         self._do_audio_fade = False
         self._rainbow_path = False
         self._path_follow_audio_speed = True
         self._lock_transform = False
-        self._show_coordinate_axis = True
+        self._show_coordinate_axis = False
 
         self._generated_fractal_cnt = 0
 
@@ -75,6 +75,8 @@ class FractalWindow(moderngl_window.WindowConfig):
         self.buildImGui(frame_time, dt)
         if self._show_coordinate_axis:
             self.rndr.drawCoordinateAxis()
+
+        self.gui.build()
 
         if self._rainbow_path:
             self.settings.path_color = (*colorsys.hsv_to_rgb(frame_time / 5, 1, 1), 1)
@@ -418,7 +420,7 @@ def main():
     window._config = weakref.ref(config)
 
     # Swap buffers once before staring the main loop.
-    # This can trigged additional resize events reporting
+    # This can trigger additional resize events reporting
     # a more accurate buffer size
     window.swap_buffers()
     window.set_default_viewport()

@@ -9,3 +9,4 @@ viztracer
 pysdl2
 pysdl2-dll
 objprint
+vulkan

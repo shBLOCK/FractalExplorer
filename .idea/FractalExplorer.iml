@@ -13,4 +13,14 @@
   <component name="PackageRequirementsSettings">
     <option name="versionSpecifier" value="Strong equality (==x.y.z)" />
   </component>
+  <component name="PyNamespacePackagesService">
+    <option name="namespacePackageFolders">
+      <list>
+        <option value="$MODULE_DIR$/gui" />
+        <option value="$MODULE_DIR$/fractal" />
+        <option value="$MODULE_DIR$/utils" />
+        <option value="$MODULE_DIR$/render" />
+      </list>
+    </option>
+  </component>
 </module>

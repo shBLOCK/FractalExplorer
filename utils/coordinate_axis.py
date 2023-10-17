@@ -19,7 +19,6 @@ def _getMinDistToBound(value, small, big):
 
 # noinspection PyTypeChecker
 def drawCoordinateAxis(translation: Vector2, scale: float, line_col: Color, text_col: Color):
-    # TODO: why bg draw list doesn't work when window is small??
     viewport = imgui.get_main_viewport()
     draw_list = imgui.get_background_draw_list(viewport)
     pos = Vector2(viewport.pos)

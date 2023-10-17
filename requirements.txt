@@ -6,7 +6,6 @@ pywin32
 PySDL2
 pysdl2-dll
 watchdog
-viztracer
 miniaudio
 numpy
 scipy

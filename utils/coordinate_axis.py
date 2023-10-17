@@ -1,3 +1,6 @@
+import ctypes
+
+import sdl2.blendmode
 from imgui_bundle import imgui
 from gdmath import Vec2
 from utils.imgui_utils import colorU32, Color
@@ -21,6 +24,9 @@ def _getMinDistToBound(value, small, big):
 def drawCoordinateAxis(translation: Vec2, scale: float, line_col: Color, text_col: Color):
     viewport = imgui.get_main_viewport()
     draw_list = imgui.get_background_draw_list(viewport)
+
+    #TODO: inverse color?
+
     pos = Vec2(*viewport.pos)
     size = Vec2(*viewport.size)
     pos1 = pos + size

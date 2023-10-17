@@ -1,6 +1,6 @@
 #version 400 compatibility
 //#extension GL_NV_gpu_shader_fp64 : enable
-#extension GL_NV_gpu_shader5 : enable
+//#extension GL_NV_gpu_shader5 : enable
 //#extension GL_ARB_gpu_shader_fp64 : enable
 //#pragma optionNV(fastmath off)
 //#pragma optionNV(fastprecision off)
@@ -80,9 +80,13 @@ VEC2 cx_sin(VEC2 a) {
 VEC2 cx_cos(VEC2 a) {
     return VEC2(cosF(a.x) * coshF(a.y), -sinF(a.x) * sinhF(a.y));
 }
+//TODO: cx_tan(VEC2 a, VEC2 b)
 VEC2 cx_exp(VEC2 a) {
     return expF(a.x) * VEC2(cosF(a.y), sinF(a.y));
 }
+//TODO: cx_pow(VEC2 a, VEC2 b)
+//TODO: cx_log(VEC2 a, VEC2 b)
+//TODO: cx_sqrt(VEC2 a)
 
 // ---------- Fractals Begin ---------
 VEC2 mandelbrot(VEC2 z, VEC2 c) {
@@ -120,16 +124,36 @@ VEC2 chirikov_mutate(VEC2 z, VEC2 c) {
 PY_INSERT_RANDOMLY_GENERATED_FUNCTIONS;
 // ---------- Fractals End ---------
 
+bool cx_isclose(VEC2 a, VEC2 b) {
+    FLOAT epsX = 1e-4;
+    FLOAT epsY = 1e-4;
+    return abs(a.x - b.x) < epsX && abs(a.y - b.y) < epsY;
+}
+
 #define FLAG_USE_COLOR false
 vec3 fractal(VEC2 z, VEC2 c) {
     VEC2 pz = z;
     VEC3 sumz = VEC3(0.0, 0.0, 0.0);
     int it;
+
+//    VEC2 history[3];
+//    int hist_write_index = 0;
+
     for (it = 0; it < uIters; ++it) {
         VEC2 ppz = pz;
         pz = z;
+
         // FRACTAL_FUNC would be replaced with one of the fractal functions
         z = PY_FRACTAL_FUNC(z, c);
+
+//        for (int hi = 0; hi < history.length(); hi++) {
+//            VEC2 h = history[hi];
+//            if (cx_isclose(z, h)) { return vec3(0., 1., 0.); }
+//        }
+//        history[hist_write_index % history.length()] = z;
+//        hist_write_index ++;
+
+
         if (dot(z, z) > uEscapeThreshold) { break; }
         sumz.x += dot(z - pz, pz - ppz);
         sumz.y += dot(z - pz, z - pz);
@@ -147,7 +171,7 @@ vec3 fractal(VEC2 z, VEC2 c) {
         vec3 n1 = sin(vec3(abs(sumz * 5.0))) * 0.45 + 0.5;
         return n1;
     } else {
-        return vec3(0.0, 0.0, 0.0);
+        return vec3(0.);
     }
 }
 

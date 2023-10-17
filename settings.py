@@ -61,7 +61,7 @@ class Settings:
         self.audio_fade = 0.
         self.sample_freq = 4000
         self.audio_buffer_size = 128
-        self.max_sources = 3
+        self.max_sources = 5
         self.interpolation = AudioInterpolations.Cubic
         self.audio_escape_threshold = 10000.
 

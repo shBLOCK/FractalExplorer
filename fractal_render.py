@@ -13,10 +13,15 @@ import fractals
 from settings import Settings
 from utils import color_utils
 from utils.utils import resource_path
+from utils import coordinate_axis
 
 COLOR_PALETTE_SAMPLES = 1024
 
-class Renderer:
+class FractalRenderingMetaData:
+    def __init__(self):
+        ...
+
+class FractalRenderer:
     # noinspection PyTypeChecker
     def __init__(self, ctx: gl.Context, wnd: BaseWindow, settings: Settings):
         self._ctx = ctx
@@ -311,8 +316,6 @@ class Renderer:
             Matrix44.orthogonal_projection(0, self._window.width, self._window.height, 0, 0.5, -0.5, dtype="f4")
         )
 
-        self._ctx.disable(gl.CULL_FACE)
-        self._ctx.enable(gl.BLEND)
         path_vao.render(mode=gl.LINE_STRIP_ADJACENCY)
 
         vbo.release()
@@ -327,3 +330,6 @@ class Renderer:
         except Exception as e:
             logging.error(f"Fractal render failed: {e}")
         self._renderPaths(frame_time)
+
+    def drawCoordinateAxis(self):
+        coordinate_axis.drawCoordinateAxis(self.translation, self.scale, (1,0,0,1), (1,0,0,1))

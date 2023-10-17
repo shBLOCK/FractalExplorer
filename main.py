@@ -1,6 +1,8 @@
 import logging
 import weakref
 
+import sdl2
+import sdl2.touch
 import os
 import sys
 from typing import Tuple
@@ -9,7 +11,6 @@ import moderngl as gl
 import moderngl_window
 from moderngl_window.timers.clock import Timer
 from imgui_bundle import imgui
-import sdl2
 from gdmath import Vec2, Vec2i
 
 from utils import imgui_utils
@@ -23,6 +24,7 @@ from settings import Settings
 import fractal_render
 import fractals
 import audio
+import gui.gui
 
 import random_fractal_expression_generator
 
@@ -64,14 +66,18 @@ class FractalWindow(moderngl_window.WindowConfig):
         super().__init__(**kwargs)
 
         self.wnd.exit_key = None
-        
+        self.wnd.sdl_event_func = self.sdl_event
+
+        self.gui = gui.gui.Gui(self)
         self.settings = Settings()
-        
-        self.rndr = fractal_render.Renderer(self.ctx, self.wnd, self.settings)
+
+        self.rndr = fractal_render.FractalRenderer(self.ctx, self.wnd, self.settings)
         self.syn = audio.Synthesizer(self.settings)
         self._do_audio_fade = False
         self._rainbow_path = False
         self._path_follow_audio_speed = True
+        self._lock_transform = False
+        self._show_coordinate_axis = False
 
         self._generated_fractal_cnt = 0
 
@@ -90,8 +96,13 @@ class FractalWindow(moderngl_window.WindowConfig):
     def render(self, frame_time, dt):
         with self.ctx.query(time=True) as gl_query:
             self.rndr.frame(frame_time, dt)
-            self.buildImGui(frame_time, dt)
         self.render_time = gl_query.elapsed
+
+        self.buildImGui(frame_time, dt)
+        if self._show_coordinate_axis:
+            self.rndr.drawCoordinateAxis()
+
+        self.gui.build()
 
         if self._rainbow_path:
             self.settings.path_color = (*imgui.color_convert_hsv_to_rgb(frame_time / 5, 1, 1), 1)
@@ -135,6 +146,12 @@ class FractalWindow(moderngl_window.WindowConfig):
         self.rndr.resetTransformation()
         self.syn.stopSound()
 
+    # def buildFractalUI(self):
+    #     imgui.begin("Fractal", flags=imgui.WindowFlags_.no_saved_settings)
+    #     imgui.combo()
+    #     imgui.input_text_multiline()
+    #     imgui.end()
+
     # noinspection PyArgumentList,PyTypeChecker
     def buildImGui(self, frame_time: float, dt: float):
         imgui.push_style_var(imgui.StyleVar_.window_rounding, 8.)
@@ -164,6 +181,8 @@ class FractalWindow(moderngl_window.WindowConfig):
                 scale_text = "%.2e" % scale
             imgui.text("Scale: %s" % scale_text)
 
+            _, self._show_coordinate_axis = imgui.checkbox("Show Axis", self._show_coordinate_axis)
+
             imgui.set_next_item_width(100)
             changed, new_ft = imgui.combo("##Type", fractals.FRACTAL_NAMES.index(self.settings.fractal.name), list(
                 fractals.FRACTAL_NAMES))
@@ -177,7 +196,11 @@ class FractalWindow(moderngl_window.WindowConfig):
             if imgui.is_item_hovered():
                 imgui.set_tooltip("Randomly generate a fractal function!")
 
-            if imgui.button("Reset Camera"):
+            changed, self._lock_transform = imgui.checkbox("Lock View", self._lock_transform)
+            if changed:
+                self._dragging = False
+
+            if imgui.button("Reset View"):
                 self.rndr.resetTransformation()
             imgui.unindent(indent)
             imgui.separator()
@@ -211,7 +234,7 @@ class FractalWindow(moderngl_window.WindowConfig):
             self._history_dts.append(dt)
             if sum(self._history_dts) > .1:
                 self._history_dts.pop(0)
-                avg_dt = sum(self._history_dts) / len(self._history_dts)
+                avg_dt = 0 if len(self._history_dts) == 0 else sum(self._history_dts) / len(self._history_dts)
                 imgui.text("%.1f fps" % (1 / max(avg_dt, .001)))
                 imgui.text("%.3f ms" % (self.render_time / 1E6))
             if imgui.button("Reset Settings##render"):
@@ -339,7 +362,8 @@ class FractalWindow(moderngl_window.WindowConfig):
     def mouse_scroll_event(self, x_offset, y_offset):
         super().mouse_scroll_event(x_offset, y_offset)
         if not imgui.get_io().want_capture_mouse:
-            self.rndr.scroll(y_offset, self.rndr.toNDR(self.mouse_pos))
+            if not self._lock_transform:
+                self.rndr.scroll(y_offset, self.rndr.toNDR(self.mouse_pos))
 
     @property
     def mouse_pos(self) -> Tuple[float, float]:
@@ -352,9 +376,14 @@ class FractalWindow(moderngl_window.WindowConfig):
         super().mouse_drag_event(x, y, dx, dy)
         # self.mouse_pos = (x, y)
         if not imgui.get_io().want_capture_mouse:
+            device = sdl2.touch.SDL_GetTouchDevice(0)
+            fingers = sdl2.touch.SDL_GetNumTouchFingers(device)
             if self.wnd.mouse_states.left:
-                self._dragging = True
-                self.rndr.drag((dx, dy))
+                if (not self._lock_transform) and fingers <= 1:
+                    self._dragging = True
+                    self.rndr.drag((dx, dy))
+                else:
+                    self._dragging = False
             if self.wnd.mouse_states.middle:
                 self._mouse_dragging_delta_for_audio_trigger.x += dx
                 self._mouse_dragging_delta_for_audio_trigger.y += dy
@@ -380,7 +409,8 @@ class FractalWindow(moderngl_window.WindowConfig):
         super().key_event(key, action, modifiers)
         if not imgui.get_io().want_capture_mouse:
             if key == self.wnd.keys.R and action == self.wnd.keys.ACTION_PRESS:
-                self.rndr.resetTransformation()
+                if not self._lock_transform:
+                    self.rndr.resetTransformation()
 
     def mouse_position_event(self, x, y, dx, dy):
         super().mouse_position_event(x, y, dx, dy)
@@ -389,6 +419,13 @@ class FractalWindow(moderngl_window.WindowConfig):
     def resize(self, width: int, height: int):
         super().resize(width, height)
         self.rndr.onResize((width, height))
+
+    def sdl_event(self, event):
+        if event.type == sdl2.SDL_MULTIGESTURE:
+            if not self._lock_transform:
+                center = Vec2(event.mgesture.x * 2 - 1, event.mgesture.y * -2 + 1)
+                delta = event.mgesture.dDist
+                self.rndr.scroll(delta * 30, center)
 
     def close(self):
         self.syn.terminate()
@@ -428,7 +465,7 @@ def main():
     window._config = weakref.ref(config)
 
     # Swap buffers once before staring the main loop.
-    # This can trigged additional resize events reporting
+    # This can trigger additional resize events reporting
     # a more accurate buffer size
     window.swap_buffers()
     window.set_default_viewport()

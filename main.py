@@ -9,7 +9,8 @@ import moderngl as gl
 import moderngl_window
 from moderngl_window.timers.clock import Timer
 from imgui_bundle import imgui
-from gdmath import Vec2
+import sdl2
+from gdmath import Vec2, Vec2i
 
 from utils import imgui_utils
 try:
@@ -29,10 +30,31 @@ USE_VIZTRACER = False
 
 os.environ["MODERNGL_WINDOW"] = "pyglet"
 
+sdl2.SDL_Init(sdl2.SDL_INIT_VIDEO)
+
+def default_window_size() -> Tuple[int, int]:
+    screen_size = sdl2.SDL_Rect()
+    sdl2.SDL_GetDisplayUsableBounds(0, screen_size)
+    screen_size = Vec2i(screen_size.w, screen_size.h)
+
+    i = 1
+    while True:
+        size = Vec2i(16 * i, 9 * i)
+        if size.x > screen_size.x * 0.9 or size.y > screen_size.y * 0.9:
+            break
+        i += 1
+
+    i -= 1
+
+    result = (16 * i, 9 * i)
+    print(f"Choosing window size: {result}")
+
+    return result
+
 class FractalWindow(moderngl_window.WindowConfig):
     title = "Fractal Explorer - By shBLOCK"
     gl_version = (4, 0)
-    window_size = (1280, 720)
+    window_size = default_window_size()
     fullscreen = False
     resizable = True
     vsync = True

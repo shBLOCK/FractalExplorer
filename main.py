@@ -78,7 +78,7 @@ class FractalWindow(moderngl_window.WindowConfig):
         self._rainbow_path = False
         self._path_follow_audio_speed = True
         self._lock_transform = False
-        self._show_coordinate_axis = ~False
+        self._show_coordinate_axis = False
 
         self._generated_fractal_cnt = 0
 
